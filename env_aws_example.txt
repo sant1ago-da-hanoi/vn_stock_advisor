@@ -1,0 +1,24 @@
+# AWS Bedrock Configuration
+# Copy this file to .env and fill in your AWS credentials
+
+# AWS Credentials (Required)
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_REGION=us-east-1
+# AWS_SESSION_TOKEN=your_session_token  # Optional, for temporary credentials
+
+# AWS Bedrock Models
+AWS_CLAUDE_MODEL=anthropic.claude-3-sonnet-20240229-v1:0
+AWS_CLAUDE_REASONING_MODEL=anthropic.claude-3-5-sonnet-20241022-v2:0
+AWS_TITAN_MODEL=amazon.titan-text-express-v1
+
+# Other API Keys (still needed for tools)
+SERPER_API_KEY=your_serper_api_key
+FIRECRAWL_API_KEY=your_firecrawl_api_key
+
+# Model Selection (choose one)
+# Use AWS Bedrock models
+USE_AWS_MODELS=true
+
+# Or use Google Gemini models (set to false to use AWS)
+USE_GEMINI_MODELS=false

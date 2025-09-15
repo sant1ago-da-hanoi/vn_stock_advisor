@@ -89,6 +89,8 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": str(date.today())}
 
+# Cache management endpoints removed - using standard SerperDevTool
+
 @app.post("/analyze/market", response_model=MarketAnalysisResponse)
 async def analyze_market(request: StockAnalysisRequest):
     """

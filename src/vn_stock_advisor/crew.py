@@ -2,8 +2,9 @@ from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.knowledge.source.json_knowledge_source import JSONKnowledgeSource
-from crewai_tools import SerperDevTool, ScrapeWebsiteTool, WebsiteSearchTool, FirecrawlScrapeWebsiteTool
+from crewai_tools import SerperDevTool, ScrapeWebsiteTool, WebsiteSearchTool
 from vn_stock_advisor.tools.custom_tool import FundDataTool, TechDataTool, FileReadTool
+from vn_stock_advisor.aws_config import AWSConfig
 from pydantic import BaseModel, Field
 from typing import List, Literal
 from dotenv import load_dotenv
@@ -13,62 +14,85 @@ warnings.filterwarnings("ignore") # Suppress unimportant warnings
 
 # Load environment variables
 load_dotenv()
+
+# Model selection flags
+USE_AWS_MODELS = os.environ.get("USE_AWS_MODELS", "false").lower() == "true"
+USE_GEMINI_MODELS = os.environ.get("USE_GEMINI_MODELS", "true").lower() == "true"
+
+# API Keys
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL")
 GEMINI_REASONING_MODEL = os.environ.get("GEMINI_REASONING_MODEL")
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY")
-FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 
-# Create an LLM with a temperature of 0 to ensure deterministic outputs
-gemini_llm = LLM(
-    model=GEMINI_MODEL,
-    api_key=GEMINI_API_KEY,
-    temperature=0,
-    max_tokens=4096
-)
+# Initialize LLM based on configuration
+if USE_AWS_MODELS:
+    aws_config = AWSConfig()
+    
+    # Set environment variables for AWS Bedrock
+    os.environ["AWS_ACCESS_KEY_ID"] = aws_config.aws_access_key_id
+    os.environ["AWS_SECRET_ACCESS_KEY"] = aws_config.aws_secret_access_key
+    os.environ["AWS_REGION_NAME"] = aws_config.aws_region
+    
+    if aws_config.aws_session_token:
+        os.environ["AWS_SESSION_TOKEN"] = aws_config.aws_session_token
+    
+    # Create LLM with Claude model
+    main_llm = LLM(
+        model="bedrock/apac.anthropic.claude-sonnet-4-20250514-v1:0",
+        temperature=0,
+        max_tokens=4096
+    )
+    
+    # Create reasoning LLM
+    reasoning_llm = LLM(
+        model="bedrock/apac.anthropic.claude-sonnet-4-20250514-v1:0",
+        temperature=0,
+        max_tokens=4096
+    )
+    print("✅ Using AWS Bedrock models (Claude)")
 
-# Create another LLM for reasoning tasks
-gemini_reasoning_llm = LLM(
-    model=GEMINI_MODEL,  # Sử dụng cùng model chính thay vì model reasoning riêng
-    api_key=GEMINI_API_KEY,
-    temperature=0,
-    max_tokens=4096
-)
+else:
+    # Create Gemini LLMs
+    main_llm = LLM(
+        model=GEMINI_MODEL,
+        api_key=GEMINI_API_KEY,
+        temperature=0,
+        max_tokens=4096
+    )
+
+    reasoning_llm = LLM(
+        model=GEMINI_REASONING_MODEL if GEMINI_REASONING_MODEL else GEMINI_MODEL,
+        api_key=GEMINI_API_KEY,
+        temperature=0,
+        max_tokens=4096
+    )
+    print("✅ Using Google Gemini models")
+
+# Set the LLM variables for backward compatibility
+llm = main_llm
 
 # Initialize the tools
 file_read_tool = FileReadTool(file_path="knowledge/PE_PB_industry_average.json")
 fund_tool=FundDataTool()
 tech_tool=TechDataTool(result_as_answer=True)
 scrape_tool = ScrapeWebsiteTool()
+# Use standard SerperDevTool with reduced results
 search_tool = SerperDevTool(
     country="vn",
     locale="vn",
     location="Hanoi, Hanoi, Vietnam",
-    n_results=20
+    n_results=3
 )
-web_search_tool = WebsiteSearchTool(
-    config=dict(
-        llm={
-            "provider": "google",
-            "config": {
-                "model": GEMINI_MODEL,
-                "api_key": GEMINI_API_KEY
-            }
-        },
-        embedder={
-            "provider": "google",
-            "config": {
-                "model": "models/text-embedding-004",
-                "task_type": "retrieval_document"
-            }
-        }
-    )
-)
+# Skip web search tool - it's causing too many issues with AWS Bedrock
+# The search_tool (SerperDevTool) is sufficient for web search functionality
+web_search_tool = None
 
-# Create a JSON knowledge source
-json_source = JSONKnowledgeSource(
-    file_paths=["PE_PB_industry_average.json"]
-)
+# Skip JSON knowledge source for now to avoid OpenAI API key issues
+# json_source = JSONKnowledgeSource(
+#     file_paths=["PE_PB_industry_average.json"]
+# )
+json_source = None
 
 # Create Pydantic Models for Structured Output
 class InvestmentDecision(BaseModel):
@@ -96,27 +120,36 @@ class VnStockAdvisor():
         return Agent(
             config=self.agents_config["stock_news_researcher"],
             verbose=True,
-            llm=gemini_llm,
+            llm=llm,
             tools=[search_tool, scrape_tool],
             max_rpm=5
         )
 
     @agent
     def fundamental_analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config["fundamental_analyst"],
-            verbose=True,
-            llm=gemini_llm,
-            tools=[fund_tool, file_read_tool],
-            knowledge_sources=[json_source],
-            max_rpm=5,
-            embedder={
+        # Configure embedder based on model provider
+        embedder_config = None
+        
+        if USE_AWS_MODELS:
+            # For AWS, skip embedder configuration to avoid schema issues
+            embedder_config = None
+        elif 'GEMINI_API_KEY' in locals() and GEMINI_API_KEY:
+            embedder_config = {
                 "provider": "google",
                 "config": {
                     "model": "models/text-embedding-004",
                     "api_key": GEMINI_API_KEY,
                 }
             }
+        
+        return Agent(
+            config=self.agents_config["fundamental_analyst"],
+            verbose=True,
+            llm=llm,
+            tools=[fund_tool, file_read_tool],
+            knowledge_sources=[json_source] if json_source else [],
+            max_rpm=5,
+            embedder=embedder_config
         )
 
     @agent
@@ -124,7 +157,7 @@ class VnStockAdvisor():
         return Agent(
             config=self.agents_config["technical_analyst"],
             verbose=True,
-            llm=gemini_llm,
+            llm=llm,
             tools=[tech_tool],
             max_rpm=5
         )
@@ -134,7 +167,7 @@ class VnStockAdvisor():
         return Agent(
             config=self.agents_config["investment_strategist"],
             verbose=True,
-            llm=gemini_reasoning_llm,
+            llm=reasoning_llm,
             max_rpm=5
         )
 

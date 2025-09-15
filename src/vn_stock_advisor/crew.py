@@ -18,6 +18,7 @@ load_dotenv()
 # Model selection flags
 USE_AWS_MODELS = os.environ.get("USE_AWS_MODELS", "false").lower() == "true"
 USE_GEMINI_MODELS = os.environ.get("USE_GEMINI_MODELS", "true").lower() == "true"
+FAST_MODE = os.environ.get("FAST_MODE", "true").lower() == "true"  # Fast mode for speed
 
 # API Keys
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -41,14 +42,14 @@ if USE_AWS_MODELS:
     main_llm = LLM(
         model="bedrock/apac.anthropic.claude-sonnet-4-20250514-v1:0",
         temperature=0,
-        max_tokens=4096
+        max_tokens=2048  # Reduced from 4096
     )
     
     # Create reasoning LLM
     reasoning_llm = LLM(
         model="bedrock/apac.anthropic.claude-sonnet-4-20250514-v1:0",
         temperature=0,
-        max_tokens=4096
+        max_tokens=2048  # Reduced from 4096
     )
     print("✅ Using AWS Bedrock models (Claude)")
 
@@ -58,14 +59,14 @@ else:
         model=GEMINI_MODEL,
         api_key=GEMINI_API_KEY,
         temperature=0,
-        max_tokens=4096
+        max_tokens=2048  # Reduced from 4096
     )
 
     reasoning_llm = LLM(
         model=GEMINI_REASONING_MODEL if GEMINI_REASONING_MODEL else GEMINI_MODEL,
         api_key=GEMINI_API_KEY,
         temperature=0,
-        max_tokens=4096
+        max_tokens=2048  # Reduced from 4096
     )
     print("✅ Using Google Gemini models")
 
@@ -119,10 +120,10 @@ class VnStockAdvisor():
     def stock_news_researcher(self) -> Agent:
         return Agent(
             config=self.agents_config["stock_news_researcher"],
-            verbose=True,
+            verbose=False,  # Reduced verbosity
             llm=llm,
-            tools=[search_tool, scrape_tool],
-            max_rpm=5
+            tools=[search_tool],  # Removed scrape_tool to reduce API calls
+            max_rpm=15  # Increased further
         )
 
     @agent
@@ -144,11 +145,11 @@ class VnStockAdvisor():
         
         return Agent(
             config=self.agents_config["fundamental_analyst"],
-            verbose=True,
+            verbose=False,  # Reduced verbosity
             llm=llm,
             tools=[fund_tool, file_read_tool],
             knowledge_sources=[json_source] if json_source else [],
-            max_rpm=5,
+            max_rpm=15,  # Increased from 5
             embedder=embedder_config
         )
 
@@ -156,19 +157,19 @@ class VnStockAdvisor():
     def technical_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["technical_analyst"],
-            verbose=True,
+            verbose=False,  # Reduced verbosity
             llm=llm,
             tools=[tech_tool],
-            max_rpm=5
+            max_rpm=15  # Increased further
         )
     
     @agent
     def investment_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config["investment_strategist"],
-            verbose=True,
+            verbose=False,  # Reduced verbosity
             llm=reasoning_llm,
-            max_rpm=5
+            max_rpm=15  # Increased further
         )
 
     @task
@@ -206,6 +207,6 @@ class VnStockAdvisor():
         return Crew(
             agents=self.agents, # Automatically created by the @agent decorator
             tasks=self.tasks, # Automatically created by the @task decorator
-            process=Process.sequential,
-            verbose=True
+            process=Process.sequential,  # Back to sequential - hierarchical needs manager
+            verbose=False  # Reduced verbosity
         )

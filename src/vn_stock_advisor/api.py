@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 import uvicorn
 from datetime import date
 import json
+import asyncio
 
 from .crew import VnStockAdvisor
 
@@ -318,7 +319,11 @@ async def complete_analysis(request: StockAnalysisRequest):
         }
         
         crew = VnStockAdvisor().crew()
-        result = crew.kickoff(inputs=inputs)
+        # Add timeout to prevent hanging
+        result = await asyncio.wait_for(
+            asyncio.to_thread(crew.kickoff, inputs=inputs),
+            timeout=60  # 1 minute timeout - force faster completion
+        )
         
         # Parse tất cả kết quả - xử lý cả dict và list
         tasks_output = getattr(result, 'tasks_output', {})
@@ -426,6 +431,8 @@ async def complete_analysis(request: StockAnalysisRequest):
             technical_analysis=technical_analysis,
             investment_decision=investment_decision
         )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail="Phân tích quá thời gian cho phép (1 phút)")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi phân tích toàn diện: {str(e)}")
 

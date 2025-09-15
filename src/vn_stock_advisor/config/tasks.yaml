@@ -1,7 +1,7 @@
 news_collecting:
   description: >
     Tìm kiếm và tóm tắt 3 bài báo có ảnh hưởng lớn nhất đến thị trường chứng khoán Việt Nam
-    trong vòng 3 tháng tính đến ngày hiện tại ({current_date}).
+    trong vòng 3 tháng tính đến ngày hiện tại ({current_date}). Ưu tiên các nguồn như: dnse.com.vn, ssi.com.vn, vneconomy.vn.
 
     Quy trình thực hiện:
     1. Sử dụng công cụ `SerperDevTool` MỘT LẦN để tìm các bài báo liên quan đến tin tức vĩ mô và chính sách kinh tế Việt Nam (ví dụ: dự báo tăng trưởng, lãi suất, thuế, đầu tư công, tỉ giá hối đoái...). Ưu tiên kết quả từ các nguồn uy tín.

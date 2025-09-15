@@ -69,6 +69,9 @@ class InvestmentDecisionResponse(BaseModel):
     buy_price: float
     sell_price: float
     overall_score: float
+    prob_up_60d: Optional[float] = None
+    expected_return_60d: Optional[float] = None
+    conviction: Optional[float] = None
 
 class CompleteAnalysisResponse(BaseModel):
     symbol: str
@@ -290,7 +293,10 @@ async def get_investment_decision(request: StockAnalysisRequest):
                 tech_reasoning=decision_output.get('tech_reasoning', ''),
                 buy_price=decision_output.get('buy_price', 0.0),
                 sell_price=decision_output.get('sell_price', 0.0),
-                overall_score=decision_output.get('overall_score', 5.0)  # Direct from JSON
+                overall_score=decision_output.get('overall_score', 5.0),
+                prob_up_60d=decision_output.get('prob_up_60d'),
+                expected_return_60d=decision_output.get('expected_return_60d'),
+                conviction=decision_output.get('conviction')
             )
         else:
             # Fallback nếu không parse được
@@ -305,7 +311,10 @@ async def get_investment_decision(request: StockAnalysisRequest):
                 tech_reasoning="Phân tích kỹ thuật",
                 buy_price=0.0,
                 sell_price=0.0,
-                overall_score=7.5
+                overall_score=7.5,
+                prob_up_60d=None,
+                expected_return_60d=None,
+                conviction=None
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi lấy quyết định đầu tư: {str(e)}")
@@ -410,7 +419,10 @@ async def complete_analysis(request: StockAnalysisRequest):
                 tech_reasoning=decision_data.get('tech_reasoning', ''),
                 buy_price=decision_data.get('buy_price', 0.0),
                 sell_price=decision_data.get('sell_price', 0.0),
-                overall_score=decision_data.get('overall_score', 5.0)  # Direct from JSON
+                overall_score=decision_data.get('overall_score', 5.0),
+                prob_up_60d=decision_data.get('prob_up_60d'),
+                expected_return_60d=decision_data.get('expected_return_60d'),
+                conviction=decision_data.get('conviction')
             )
         else:
             investment_decision = InvestmentDecisionResponse(
@@ -424,7 +436,10 @@ async def complete_analysis(request: StockAnalysisRequest):
                 tech_reasoning="Phân tích kỹ thuật",
                 buy_price=0.0,
                 sell_price=0.0,
-                overall_score=7.5
+                overall_score=7.5,
+                prob_up_60d=None,
+                expected_return_60d=None,
+                conviction=None
             )
         
         return CompleteAnalysisResponse(

@@ -282,6 +282,20 @@ async def get_investment_decision(request: StockAnalysisRequest):
         # Nếu là dict, parse thành InvestmentDecisionResponse
         if isinstance(decision_output, dict):
             # Use direct JSON fields - no regex needed!
+            # Safely convert buy_price and sell_price to float, handling None values
+            buy_price = decision_output.get('buy_price')
+            sell_price = decision_output.get('sell_price')
+            
+            try:
+                buy_price = float(buy_price) if buy_price is not None else 0.0
+            except (ValueError, TypeError):
+                buy_price = 0.0
+                
+            try:
+                sell_price = float(sell_price) if sell_price is not None else 0.0
+            except (ValueError, TypeError):
+                sell_price = 0.0
+            
             return InvestmentDecisionResponse(
                 stock_ticker=decision_output.get('stock_ticker', request.symbol),
                 full_name=decision_output.get('full_name', ''),
@@ -291,8 +305,8 @@ async def get_investment_decision(request: StockAnalysisRequest):
                 macro_reasoning=decision_output.get('macro_reasoning', ''),
                 fund_reasoning=decision_output.get('fund_reasoning', ''),
                 tech_reasoning=decision_output.get('tech_reasoning', ''),
-                buy_price=decision_output.get('buy_price', 0.0),
-                sell_price=decision_output.get('sell_price', 0.0),
+                buy_price=buy_price,
+                sell_price=sell_price,
                 overall_score=decision_output.get('overall_score', 5.0),
                 prob_up_60d=decision_output.get('prob_up_60d'),
                 expected_return_60d=decision_output.get('expected_return_60d'),
@@ -334,7 +348,7 @@ async def complete_analysis(request: StockAnalysisRequest):
         # Add timeout to prevent hanging
         result = await asyncio.wait_for(
             asyncio.to_thread(crew.kickoff, inputs=inputs),
-            timeout=90  # 1 minute timeout - force faster completion
+            timeout=180  # 1 minute timeout - force faster completion
         )
         
         # Parse tất cả kết quả - xử lý cả dict và list
@@ -408,6 +422,20 @@ async def complete_analysis(request: StockAnalysisRequest):
         
         if isinstance(decision_data, dict):
             # Use direct JSON fields - no regex needed!
+            # Safely convert buy_price and sell_price to float, handling None values
+            buy_price = decision_data.get('buy_price')
+            sell_price = decision_data.get('sell_price')
+            
+            try:
+                buy_price = float(buy_price) if buy_price is not None else 0.0
+            except (ValueError, TypeError):
+                buy_price = 0.0
+                
+            try:
+                sell_price = float(sell_price) if sell_price is not None else 0.0
+            except (ValueError, TypeError):
+                sell_price = 0.0
+            
             investment_decision = InvestmentDecisionResponse(
                 stock_ticker=decision_data.get('stock_ticker', request.symbol),
                 full_name=decision_data.get('full_name', ''),
@@ -417,8 +445,8 @@ async def complete_analysis(request: StockAnalysisRequest):
                 macro_reasoning=decision_data.get('macro_reasoning', ''),
                 fund_reasoning=decision_data.get('fund_reasoning', ''),
                 tech_reasoning=decision_data.get('tech_reasoning', ''),
-                buy_price=decision_data.get('buy_price', 0.0),
-                sell_price=decision_data.get('sell_price', 0.0),
+                buy_price=buy_price,
+                sell_price=sell_price,
                 overall_score=decision_data.get('overall_score', 5.0),
                 prob_up_60d=decision_data.get('prob_up_60d'),
                 expected_return_60d=decision_data.get('expected_return_60d'),

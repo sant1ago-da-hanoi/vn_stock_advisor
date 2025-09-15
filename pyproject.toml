@@ -9,6 +9,8 @@ dependencies = [
     "google-generativeai>=0.8.4",
     "python-dotenv>=1.1.0",
     "vnstock>=3.2.4",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
 ]
 
 [project.scripts]
@@ -17,6 +19,7 @@ run_crew = "vn_stock_advisor.main:run"
 train = "vn_stock_advisor.main:train"
 replay = "vn_stock_advisor.main:replay"
 test = "vn_stock_advisor.main:test"
+api_server = "vn_stock_advisor.api:main"
 
 [build-system]
 requires = ["hatchling"]

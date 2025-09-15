@@ -14,8 +14,8 @@ warnings.filterwarnings("ignore") # Suppress unimportant warnings
 # Load environment variables
 load_dotenv()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-GEMINI_MODEL = os.environ.get("MODEL")
-GEMINI_REASONING_MODEL = os.environ.get("MODEL_REASONING")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL")
+GEMINI_REASONING_MODEL = os.environ.get("GEMINI_REASONING_MODEL")
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY")
 FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 
@@ -29,7 +29,7 @@ gemini_llm = LLM(
 
 # Create another LLM for reasoning tasks
 gemini_reasoning_llm = LLM(
-    model=GEMINI_REASONING_MODEL,
+    model=GEMINI_MODEL,  # Sử dụng cùng model chính thay vì model reasoning riêng
     api_key=GEMINI_API_KEY,
     temperature=0,
     max_tokens=4096
@@ -142,24 +142,21 @@ class VnStockAdvisor():
     def news_collecting(self) -> Task:
         return Task(
             config=self.tasks_config["news_collecting"],
-            async_execution=True,
-            output_file="market_analysis.md"
+            async_execution=True
         )
 
     @task
     def fundamental_analysis(self) -> Task:
         return Task(
             config=self.tasks_config["fundamental_analysis"],
-            async_execution=True,
-            output_file="fundamental_analysis.md"
+            async_execution=True
         )
 
     @task
     def technical_analysis(self) -> Task:
         return Task(
             config=self.tasks_config["technical_analysis"],
-            async_execution=True,
-            output_file="technical_analysis.md"
+            async_execution=True
         )
     
     @task
@@ -167,8 +164,7 @@ class VnStockAdvisor():
         return Task(
             config=self.tasks_config["investment_decision"],
             context=[self.news_collecting(), self.fundamental_analysis(), self.technical_analysis()],
-            output_json=InvestmentDecision,
-            output_file="final_decision.json"
+            output_json=InvestmentDecision
         )
 
     @crew

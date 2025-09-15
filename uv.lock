@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12.4'",
@@ -3915,16 +3915,20 @@ version = "0.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "crewai", extra = ["tools"] },
+    { name = "fastapi" },
     { name = "google-generativeai" },
     { name = "python-dotenv" },
+    { name = "uvicorn" },
     { name = "vnstock" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "crewai", extras = ["tools"], specifier = ">=0.117.0" },
+    { name = "fastapi", specifier = ">=0.104.0" },
     { name = "google-generativeai", specifier = ">=0.8.4" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "uvicorn", specifier = ">=0.24.0" },
     { name = "vnstock", specifier = ">=3.2.4" },
 ]
 

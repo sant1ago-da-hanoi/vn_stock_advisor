@@ -272,10 +272,13 @@ async def get_investment_decision(request: StockAnalysisRequest):
                 import json
                 decision_output = json.loads(decision_output)
             except:
+                # If JSON parsing fails, try to extract from the string
                 decision_output = {}
+        
         
         # Nếu là dict, parse thành InvestmentDecisionResponse
         if isinstance(decision_output, dict):
+            # Use direct JSON fields - no regex needed!
             return InvestmentDecisionResponse(
                 stock_ticker=decision_output.get('stock_ticker', request.symbol),
                 full_name=decision_output.get('full_name', ''),
@@ -287,7 +290,7 @@ async def get_investment_decision(request: StockAnalysisRequest):
                 tech_reasoning=decision_output.get('tech_reasoning', ''),
                 buy_price=decision_output.get('buy_price', 0.0),
                 sell_price=decision_output.get('sell_price', 0.0),
-                overall_score=7.5  # Placeholder
+                overall_score=decision_output.get('overall_score', 5.0)  # Direct from JSON
             )
         else:
             # Fallback nếu không parse được
@@ -322,7 +325,7 @@ async def complete_analysis(request: StockAnalysisRequest):
         # Add timeout to prevent hanging
         result = await asyncio.wait_for(
             asyncio.to_thread(crew.kickoff, inputs=inputs),
-            timeout=60  # 1 minute timeout - force faster completion
+            timeout=90  # 1 minute timeout - force faster completion
         )
         
         # Parse tất cả kết quả - xử lý cả dict và list
@@ -395,6 +398,7 @@ async def complete_analysis(request: StockAnalysisRequest):
                 decision_data = {}
         
         if isinstance(decision_data, dict):
+            # Use direct JSON fields - no regex needed!
             investment_decision = InvestmentDecisionResponse(
                 stock_ticker=decision_data.get('stock_ticker', request.symbol),
                 full_name=decision_data.get('full_name', ''),
@@ -406,7 +410,7 @@ async def complete_analysis(request: StockAnalysisRequest):
                 tech_reasoning=decision_data.get('tech_reasoning', ''),
                 buy_price=decision_data.get('buy_price', 0.0),
                 sell_price=decision_data.get('sell_price', 0.0),
-                overall_score=7.5
+                overall_score=decision_data.get('overall_score', 5.0)  # Direct from JSON
             )
         else:
             investment_decision = InvestmentDecisionResponse(
@@ -432,7 +436,7 @@ async def complete_analysis(request: StockAnalysisRequest):
             investment_decision=investment_decision
         )
     except asyncio.TimeoutError:
-        raise HTTPException(status_code=408, detail="Phân tích quá thời gian cho phép (1 phút)")
+        raise HTTPException(status_code=408, detail="Phân tích quá thời gian cho phép (3 phút)")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi phân tích toàn diện: {str(e)}")
 

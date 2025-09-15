@@ -1,7 +1,6 @@
 news_collecting:
   description: >
-    Tìm kiếm và tóm tắt 3 bài báo có ảnh hưởng lớn nhất đến thị trường chứng khoán Việt Nam
-    trong vòng 3 tháng tính đến ngày hiện tại ({current_date}). Ưu tiên các nguồn như: dnse.com.vn, ssi.com.vn, vneconomy.vn.
+    Tìm kiếm và tóm tắt 3 bài báo có ảnh hưởng lớn nhất đến thị trường chứng khoán Việt Nam trong vòng 3 tháng tính đến ngày hiện tại ({current_date}). Ưu tiên các nguồn như: dnse.com.vn, ssi.com.vn, vneconomy.vn.
 
     Quy trình thực hiện:
     1. Sử dụng công cụ `SerperDevTool` MỘT LẦN để tìm các bài báo liên quan đến tin tức vĩ mô và chính sách kinh tế Việt Nam (ví dụ: dự báo tăng trưởng, lãi suất, thuế, đầu tư công, tỉ giá hối đoái...). Ưu tiên kết quả từ các nguồn uy tín.
@@ -13,7 +12,7 @@ news_collecting:
     - Chỉ chọn bài viết có ngày đăng trong vòng 3 tháng trở lại.
     - KHÔNG lựa chọn hay sử dụng các bài viết từ nguồn vietstock.vn.
     - Chỉ chọn bài có tiêu đề và nội dung thể hiện rõ ảnh hưởng đến thị trường tài chính/chứng khoán Việt Nam.
-    - KHÔNG được tự tạo ra nội dung. Câu trả lời phải dựa trên dữ liệu trích xuất từ 2 công cụ `SerperDevTool` và `ScrapeWebsiteTool`.
+    - KHÔNG được tự tạo ra nội dung. Câu trả lời phải dựa trên dữ liệu trích xuất từ 2 công cụ `SerperDevTool` và `ScrapeWebsiteTool`."
   expected_output: >
     Một danh sách dạng markdown gồm 3 mục, mỗi mục bao gồm:
     - Tiêu đề bài báo (in đậm)
@@ -24,69 +23,145 @@ news_collecting:
   agent: stock_news_researcher
 
 fundamental_analysis:
-  description: >
+  description: |
     Phân tích cơ bản mã cổ phiếu {symbol} dựa trên các chỉ số tài chính để đánh giá mức định giá và sức khỏe doanh nghiệp.
 
     Quy trình thực hiện:
-    1. Sử dụng công cụ `fund_tool` để thu thập các chỉ số: P/E, P/B, ROE, D/E, EPS, EV/EBITDA, tăng trưởng doanh thu/lợi nhuận, và biên lợi nhuận.
-    2. Xác định cổ phiếu thuộc ngành nào.
-    3. So sánh P/E và P/B của cổ phiếu với trung bình ngành từ tệp `knowledge/PE_PB_industry_average.json`.
-       Nếu ngành chưa có dữ liệu, sử dụng ngành gần nhất tương đương.
-    4. Phân tích các chỉ số còn lại để đánh giá hiệu suất hoạt động và mức độ rủi ro tài chính.
-
-    Ngày thực hiện: {current_date}
-  expected_output: >
+      1. Sử dụng công cụ `fund_tool` để thu thập các chỉ số: P/E, P/B, ROE, D/E, EPS, EV/EBITDA, tăng trưởng doanh thu/lợi nhuận, và biên lợi nhuận.
+      2. Xác định cổ phiếu thuộc ngành nào.
+      3. So sánh P/E và P/B của cổ phiếu với trung bình ngành từ tệp `knowledge/PE_PB_industry_average.json`.
+         Nếu ngành chưa có dữ liệu, sử dụng ngành gần nhất tương đương.
+      4. Phân tích các chỉ số còn lại để đánh giá hiệu suất hoạt động và mức độ rủi ro tài chính.
+      5. Ngày thực hiện: {current_date}
+      6. Chuẩn hoá điểm con theo **z‑score theo ngành** rồi ánh xạ `score = clamp(Φ(z) * 10, 0, 10)` để tránh dồn điểm vào khoảng giữa.
+  expected_output: |
     Một báo cáo bằng tiếng Việt, dài 2–3 đoạn, bao gồm:
-    - Nhận định định giá: rẻ / đắt / hợp lý
-    - Đánh giá hiệu quả hoạt động tài chính: liệu các chỉ số nằm trong ngưỡng tốt hay không
-    - Nhận xét tổng thể về triển vọng kinh doanh
-
+      - Nhận định định giá: rẻ / đắt / hợp lý
+      - Đánh giá hiệu quả hoạt động tài chính: liệu các chỉ số nằm trong ngưỡng tốt hay không
+      - Nhận xét tổng thể về triển vọng kinh doanh
   agent: fundamental_analyst
 
 technical_analysis:
   description: >
-    Đánh giá xu hướng giá của cổ phiếu {symbol} trong ngày {current_date} thông qua phân tích kỹ thuật.
+    Đánh giá xu hướng giá của cổ phiếu {symbol} trong ngày {current_date}
+    thông qua phân tích kỹ thuật.
 
     Quy trình thực hiện:
     1. Sử dụng công cụ `tech_tool` để thu thập các chỉ báo: SMA, EMA, RSI, MACD, khối lượng giao dịch, OBV và xác định vùng hỗ trợ/kháng cự.
     2. Xác định xu hướng hiện tại (tăng/giảm/tích lũy).
     3. Đưa ra đánh giá động lượng và khả năng xuất hiện tín hiệu giao dịch.
-
+    4. Chuẩn hoá điểm kỹ thuật bằng **z‑score theo ngành/nhóm so sánh**, ánh xạ `score= clamp(Φ(z) * 10, 0, 10)`.
   expected_output: >
     Một báo cáo bằng tiếng Việt, dài 2–3 đoạn, bao gồm:
     - Nhận định xu hướng hiện tại (tăng/giảm/đi ngang)
     - Phân tích tín hiệu kỹ thuật (ví dụ: RSI quá mua/quá bán, giao cắt MACD...)
     - Đánh giá tổng thể về thời điểm mua bán từ góc nhìn kỹ thuật
-
   agent: technical_analyst
 
 investment_decision:
   description: >
-    Dựa trên kết quả tổng hợp từ các phân tích thành phần (news_collecting, fundamental_analysis, technical_analysis), 
-    đánh giá mã cổ phiếu {symbol} bằng hệ thống điểm số lượng hóa và đưa ra khuyến nghị đầu tư cụ thể.
+    Dựa trên kết quả tổng hợp từ các phân tích thành phần (news_collecting, fundamental_analysis, technical_analysis), đánh giá mã cổ phiếu {symbol} bằng hệ thống điểm số lượng hóa và đưa ra khuyến nghị đầu tư cụ thể.
 
     Quy trình thực hiện:
-    1. Tóm tắt ngắn gọn kết quả phân tích từng phần: vĩ mô, cơ bản, kỹ thuật.
-    2. Chấm điểm từng yếu tố (thang điểm 0–10), kèm lý do.
-    3. Tính điểm tổng hợp (trung bình gia quyền hoặc theo logic được mô tả).
-    4. Đưa ra khuyến nghị rõ ràng: **MUA**, **GIỮ**, hoặc **BÁN**, dựa trên ngưỡng điểm như sau:
-       - **MUA**: nếu điểm trung bình >= 7.5
-       - **GIỮ**: nếu điểm trung bình từ 4.0 đến 7.4
-       - **BÁN**: nếu điểm trung bình < 4.0
-    5. Nếu chưa đạt ngưỡng **MUA** hoặc **BÁN**: đề xuất mức giá mục tiêu dựa trên phân tích kỹ thuật.
+      1. Tóm tắt ngắn gọn kết quả phân tích từng phần: vĩ mô, cơ bản, kỹ thuật.
+      2. Chấm điểm từng yếu tố (thang điểm 0–10), kèm lý do. SỬ DỤNG TOÀN BỘ THANG ĐIỂM:
+         - "xuất sắc", "vượt trội", "tuyệt vời" → 8-10 điểm
+         - "tích cực", "hỗ trợ", "hưởng lợi", "tốt" → 6-8 điểm
+         - "trung bình", "ổn định", "bình thường" → 4-6 điểm
+         - "yếu", "kém", "khó khăn" → 2-4 điểm
+         - "rất yếu", "thảm hại", "cực kỳ rủi ro" → 0-2 điểm
+      3. Tính điểm tổng hợp (trung bình gia quyền với trọng số mặc định: macro 0.30, cơ bản 0.40, kỹ thuật 0.30) và điều chỉnh theo 'regime' thị trường.
+      4. Đưa ra khuyến nghị rõ ràng: **MUA**, **GIỮ**, hoặc **BÁN**, dựa trên ngưỡng điểm như sau:
+         - **MUA**: nếu điểm trung bình >= 6.5 (BẮT BUỘC)
+         - **GIỮ**: nếu điểm trung bình từ 4.5 đến 6.4 (BẮT BUỘC)
+         - **BÁN**: nếu điểm trung bình < 4.5 (BẮT BUỘC)
+         - **QUAN TRỌNG**: 6.5 = MUA, 6.4 = GIỮ (không được nhầm lẫn)
+      5. Nếu chưa đạt ngưỡng **MUA** hoặc **BÁN**: đề xuất mức giá mục tiêu dựa trên phân tích kỹ thuật.
 
     Lưu ý:
-    - **KHÔNG** được bỏ qua khuyến nghị hành động.
-    - Kết luận **phải** được xây dựng trên nền tảng điểm số và phân tích từ cả 3 yếu tố.
-    - Ưu tiên các khuyến nghị có thể kiểm chứng và tái sử dụng trong báo cáo phân tích đầu tư chuyên nghiệp.
+      - **KHÔNG** được bỏ qua khuyến nghị hành động.
+      - Kết luận **phải** được xây dựng trên nền tảng điểm số và phân tích từ cả 3 yếu tố.
+      - Ưu tiên các khuyến nghị có thể kiểm chứng và tái sử dụng trong báo cáo phân tích đầu tư chuyên nghiệp.
+      - Tránh những đánh gía mang tính nước đôi, cần đảm bảo điểm số phù hợp với nội dung phân tích.
 
+    6. Áp dụng **override** khi tín hiệu kỹ thuật mạnh (ví dụ: MACD cắt lên + RSI<35 + OBV tăng ⇒ cộng 0.8; thủng hỗ trợ + vol tăng ⇒ trừ 0.8) và **gating**: chỉ cho MUA nếu fund≥6.0 và macro≥5.0.
+    7. Tính **prob_up_60d** (xác suất giá vượt VNIndex trong 60 ngày) bằng logistic trên điểm đã chuẩn hoá:
+       p = sigmoid(-6 + 0.35*macro_score + 0.45*fund_score + 0.30*tech_score).
+       Ước lượng **expected_return_60d** từ tín hiệu kỹ thuật (ví dụ: ER ≈ k*(tech_score-5)/5, mặc định k=0.10).
+       Nếu overall_score nằm trong vùng GIỮ (4.5–6.4) thì quyết định theo:
+       - **MUA** nếu prob_up_60d ≥ 0.62 và expected_return_60d ≥ 0.06
+       - **BÁN** nếu prob_up_60d ≤ 0.38 và expected_return_60d ≤ -0.06
+       - Nếu không thoả, giữ nguyên quyết định theo ngưỡng điểm tổng.
+    8. Nếu kích hoạt **no_trade_rule** (illiquid) ⇒ trả về quyết định **GIỮ (no-trade)**, đặt buy_price/sell_price = null, conviction = 0.0 và chỉ thoát khi điều kiện exit_plan thoả.
   expected_output: >
-    Một đoạn văn bằng tiếng Việt, có cấu trúc chuẩn như sau:
-    - Tên công ty, mã cổ phiếu, ngành nghề
-    - **Phân tích vĩ mô**: Tóm tắt khoảng 200 từ + điểm (0–10) + lý do
-    - **Phân tích cơ bản**: Tóm tắt khoảng 200 từ + điểm (0–10) + lý do
-    - **Phân tích kỹ thuật**: Tóm tắt khoảng 200 từ + điểm (0–10) + lý do
-    - **Kết luận**: tính điểm trung bình (ví dụ: 7.8/10) và đưa ra khuyến nghị MUA / GIỮ / BÁN
-    - **Nếu GIỮ**: đề xuất 2 mức giá mục tiêu để MUA và BÁN dựa trên phân tích kỹ thuật.
-
+      Trả về JSON với cấu trúc sau (CHỈ JSON, KHÔNG có text khác):
+      {
+        "stock_ticker": "MÃ_CỔ_PHIẾU",
+        "full_name": "Tên đầy đủ công ty",
+        "industry": "Ngành nghề",
+        "today_date": "YYYY-MM-DD",
+        "decision": "MUA|GIỮ|BÁN",
+        "macro_reasoning": "Phân tích vĩ mô chi tiết khoảng 200 từ + lý do + điểm",
+        "fund_reasoning": "Phân tích cơ bản chi tiết khoảng 200 từ + lý do + điểm", 
+        "tech_reasoning": "Phân tích kỹ thuật chi tiết khoảng 200 từ + lý do + điểm",
+        "macro_score": 6.0,
+        "fund_score": 7.5,
+        "tech_score": 6.0,
+        "overall_score": 6.5,
+        "buy_price": 60000.0,
+        "sell_price": 70000.0,
+        "prob_up_60d": 0.62,
+        "expected_return_60d": 0.06,
+        "conviction": 7.1
+      }
   agent: investment_strategist
+  scoring_rules:
+    weights_default:
+      macro: 0.3
+      fund: 0.4
+      tech: 0.3
+    weights_risk_on:
+      macro: 0.2
+      fund: 0.35
+      tech: 0.45
+    risk_on_condition: Thị trường breadth > 50% và VNIndex > SMA200
+    overrides:
+      bull_boost:
+        condition: MACD cắt lên + RSI<35 bật lên + OBV tăng
+        delta: 0.8
+      bear_penalty:
+        condition: Phá vỡ hỗ trợ kèm khối lượng tăng
+        delta: -0.8
+    thresholds:
+      BUY: ≥ 6.5
+      HOLD: 4.5 – 6.4
+      SELL: < 4.5
+    decisive_rules:
+      score_stretch_alpha: 1.2   # kéo điểm ra xa 5 để giảm kẹt ở giữa
+      probability_model:
+        formula: "p = sigmoid(-6 + 0.35*macro + 0.45*fund + 0.30*tech)"
+        buy_if: "p >= 0.62"
+        sell_if: "p <= 0.38"
+      expected_return_model:
+        horizon_days: 60
+        k_default: 0.10          # 10%/60d khi tech_score=10, tuyến tính theo (tech-5)/5
+        buy_if:  "ER >= 0.06"
+        sell_if: "ER <= -0.06"
+      decision_order:
+        - "probability_model"
+        - "expected_return_model"
+        - "overall_thresholds"
+    transforms:
+      overall_stretched: "5 + score_stretch_alpha * (overall_score - 5)"
+    validator:
+      enforce_thresholds:
+        rule: "Sau khi áp dụng mọi điều chỉnh, nếu overall_score < 4.5 => quyết định = BÁN; nếu overall_score >= 6.5 => quyết định = MUA; các trường hợp khác giữ theo quyết định trước đó."
+        comparison_precision: 2
+    no_trade_rule:
+      illiquid_if: "avg_volume_10d == 0 hoặc cổ phiếu bị tạm ngừng giao dịch >= 5 phiên"
+      decision_override: "GIỮ"   # vì không thể thực thi lệnh
+      set_output:
+        buy_price: null
+        sell_price: null
+        conviction: 0.0
+      exit_plan: "Chỉ xem xét BÁN khi giao dịch trở lại ≥ 3 phiên liên tiếp và khối lượng ≥ MA20"

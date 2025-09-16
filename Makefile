@@ -19,6 +19,15 @@ help:
 	@echo "  make clean            - Clean cache and temporary files"
 	@echo "  make logs             - Show recent logs"
 	@echo ""
+	@echo "🐳 Docker Commands:"
+	@echo "  make dbuild     - Build Docker image"
+	@echo "  make drun       - Run container with .env file"
+	@echo "  make dcompose-up    - Start with Docker Compose"
+	@echo "  make dcompose-down  - Stop Docker Compose services"
+	@echo "  make dcompose-logs   - Show Docker Compose logs"
+	@echo "  make dsetup-env     - Create .env from template"
+	@echo "  make dclean         - Clean Docker resources"
+	@echo ""
 	@echo "📊 API Endpoints (when server is running):"
 	@echo "  http://localhost:8000/docs      - Interactive API documentation"
 	@echo "  http://localhost:8000/redoc     - Alternative API docs"
@@ -83,14 +92,44 @@ logs:
 		echo "No log file found. Run the application to generate logs."; \
 	fi
 
-# Docker commands (if you want to add Docker support later)
-docker-build:
+# Docker commands
+dbuild:
 	@echo "🐳 Building Docker image..."
 	docker build -t vn-stock-advisor .
 
-docker-run:
+drun:
 	@echo "🐳 Running in Docker container..."
 	docker run -p 8000:8000 --env-file .env vn-stock-advisor
+
+dcompose-up:
+	@echo "🐳 Starting services with Docker Compose..."
+	docker compose up -d --force-recreate --remove-orphans
+
+dcompose-down:
+	@echo "🐳 Stopping services with Docker Compose..."
+	docker compose down --remove-orphans
+
+dlog:
+	@echo "📋 Showing Docker Compose logs..."
+	docker compose logs -f
+
+dcompose-restart:
+	@echo "🔄 Restarting services with Docker Compose..."
+	docker compose restart
+
+dsetup-env:
+	@echo "📝 Creating .env file from Docker template..."
+	@if [ ! -f .env ]; then \
+		cp env.docker.template .env; \
+		echo "✅ .env file created from template! Please edit with your API keys."; \
+	else \
+		echo "⚠️  .env file already exists. Skipping creation."; \
+	fi
+
+dclean:
+	@echo "🧹 Cleaning Docker resources..."
+	docker compose down --volumes --remove-orphans
+	@echo "✅ Docker cleanup completed!"
 
 # Show current configuration
 config:

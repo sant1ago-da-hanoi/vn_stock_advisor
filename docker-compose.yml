@@ -1,0 +1,54 @@
+services:
+  vn-stock-advisor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vn-stock-advisor
+    ports:
+      - "5090:8000"
+    environment:
+      # API Keys - Set these in your .env file or override here
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini/gemini-2.0-flash-001}
+      - GEMINI_REASONING_MODEL=${GEMINI_REASONING_MODEL:-gemini/gemini-2.5-flash-preview-04-17}
+      - SERPER_API_KEY=${SERPER_API_KEY}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      
+      # AWS Configuration (if using AWS models)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_CLAUDE_MODEL=${AWS_CLAUDE_MODEL:-anthropic.claude-3-sonnet-20240229-v1:0}
+      - AWS_CLAUDE_REASONING_MODEL=${AWS_CLAUDE_REASONING_MODEL:-anthropic.claude-3-5-sonnet-20241022-v2:0}
+      - AWS_TITAN_MODEL=${AWS_TITAN_MODEL:-amazon.titan-text-express-v1}
+      
+      # Model Selection
+      - USE_AWS_MODELS=${USE_AWS_MODELS:-false}
+      - USE_GEMINI_MODELS=${USE_GEMINI_MODELS:-true}
+      
+      # Application settings
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount the database directory for persistence
+      - ./db:/app/db
+      # Mount knowledge directory for data persistence
+      - ./knowledge:/app/knowledge
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - vn-stock-network
+
+networks:
+  vn-stock-network:
+    driver: bridge
+
+# Optional: Add a volume for persistent data
+volumes:
+  db_data:
+  knowledge_data:
